@@ -30,6 +30,7 @@ class SimpleLevel : public Level {
   bool down() const override;
 };
 
+
 class Config {
  public:
   Config();
@@ -39,16 +40,15 @@ class Config {
   static Config* read_config(const std::string& filename);
 
   bool add_level(std::unique_ptr<Level>&& level);
-  std::vector<Level *>* levels();
+  std::vector<std::unique_ptr<Level>>* levels();
 
   bool add_fan(int pin);
 
   bool add_sensor(const std::string& p);
 
  private:
-  std::vector<Level *> levels_;
+  std::vector<std::unique_ptr<Level>> levels_;
   unsigned int num_temps_;
 };
-
 
 }  // namespace fan

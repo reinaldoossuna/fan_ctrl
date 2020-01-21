@@ -7,49 +7,6 @@
 
 namespace fan {
 
-Config* Config::read_config(const std::string& filename) {
-  Config* c = nullptr;
-  YAML::Node file = YAML::LoadFile(filename);
-
-  try {
-    auto sensors = file["sensors"];
-    c->add_sensor(sensors.as<std::string>());
-    auto fan = file["fan-pin"];
-    c->add_fan(fan.as<int>());
-    /*
-    const YAML::Node& levels = file["levels"];
-    for (YAML::const_iterator it = levels.begin();
-        it != levels.end();
-        ++it) {
-      const auto level = *it;
-      auto level_vector = level.as<std::vector<int>>();
-      std::unique_ptr<SimpleLevel> l(new SimpleLevel(level_vector[0], level_vector[1], level_vector[2]));
-      c->add_level(std::move(l));
-    }
-      */
-  } catch (YAML::BadConversion &e){
-    std::cout << "Bad Config file" << std::endl;
-  }
-
-  /*
-  const YAML::Node& levels = config["levels"];
-
-    auto v = level.as<std::vector<int>>();
-  */
-  return c;
-}
-
-bool Config::add_fan(int pin) {
-  // TODO
-  std::cout << pin << std::endl;
-  return true;
-}
-
-bool Config::add_sensor(const std::string& p) {
-  // TODO
-  std::cout << p << std::endl;
-  return true;
-}
 
 Level::Level(int level, int lower_limit, int upper_limit)
     : Level(level,
@@ -102,12 +59,49 @@ bool Config::add_level(std::unique_ptr<Level>&& level) {
   if (!level)
     return false;
 
-  levels_.push_back(level.release());
+  levels_.emplace_back(std::move(level));
   return true;
 }
 
-std::vector<Level *>* Config::levels() {
+std::vector<std::unique_ptr<Level>>* Config::levels() {
   return &levels_;
+}
+
+Config* Config::read_config(const std::string& filename) {
+  std::unique_ptr<Config> c(new Config());
+  YAML::Node file = YAML::LoadFile(filename);
+
+  try {
+    auto sensors = file["sensors"];
+    c->add_sensor(sensors.as<std::string>());
+    auto fan = file["fan-pin"];
+    c->add_fan(fan.as<int>());
+    const YAML::Node& levels = file["levels"];
+    for (YAML::const_iterator it = levels.begin();
+        it != levels.end();
+        ++it) {
+      const auto level = *it;
+      auto level_vector = level.as<std::vector<int>>();
+      std::unique_ptr<SimpleLevel> l(new SimpleLevel(level_vector[0], level_vector[1], level_vector[2]));
+      c->add_level(std::move(l));
+    }
+  } catch (YAML::BadConversion &e){
+    std::cout << "Bad Config file" << std::endl;
+  }
+
+  return c.release();
+}
+
+bool Config::add_fan(int pin) {
+  // TODO
+  std::cout << pin << std::endl;
+  return true;
+}
+
+bool Config::add_sensor(const std::string& p) {
+  // TODO
+  std::cout << p << std::endl;
+  return true;
 }
 
 }  // namespace fan
